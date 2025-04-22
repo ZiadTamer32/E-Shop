@@ -49,7 +49,11 @@ app.all("*", (req, res, next) => {
 app.use(globalError);
 
 // Ports
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 3000;
+
+app.get("/", (req, res) => {
+  res.send("Welcome to the server of E-commerce API");
+});
 
 const server = app.listen(PORT, () => {
   console.log(`App running at port ${PORT}`);
