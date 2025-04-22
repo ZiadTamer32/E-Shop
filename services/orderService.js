@@ -5,6 +5,7 @@ const stripe = require("stripe")(
 const asyncHandler = require("express-async-handler");
 const factory = require("./handleFactory");
 const OrderModel = require("../models/orderModel");
+const UserModel = require("../models/UserModel");
 const CartModel = require("../models/cartModel");
 const ProductModel = require("../models/productModel");
 const ApiError = require("../utils/ApiErrors");
@@ -151,36 +152,42 @@ exports.checkOutSession = asyncHandler(async (req, res, next) => {
 });
 
 const createCardOrder = async (session) => {
-  const cartId = session.client_reference_id;
-  const shippingAddress = session.metadata;
-  const oderPrice = session.amount_total / 100;
+  try {
+    const cartId = session.client_reference_id;
+    const shippingAddress = session.metadata;
+    const orderPrice = session.amount_total / 100;
 
-  const cart = await Cart.findById(cartId);
-  const user = await User.findOne({ email: session.customer_email });
+    const cart = await CartModel.findById(cartId);
+    const user = await UserModel.findOne({ email: session.customer_email });
 
-  // 3) Create order with default paymentMethodType card
-  const order = await Order.create({
-    user: user._id,
-    cartItems: cart.cartItems,
-    shippingAddress,
-    totalOrderPrice: oderPrice,
-    isPaid: true,
-    paidAt: Date.now(),
-    paymentMethodType: "card"
-  });
+    if (!cart || !user) {
+      console.error("Cart or User not found");
+      return;
+    }
 
-  // 4) After creating order, decrement product quantity, increment product sold
-  if (order) {
-    const bulkOption = cart.cartItems.map((item) => ({
-      updateOne: {
-        filter: { _id: item.product },
-        update: { $inc: { quantity: -item.quantity, sold: +item.quantity } }
-      }
-    }));
-    await Product.bulkWrite(bulkOption, {});
+    const order = await OrderModel.create({
+      user: user._id,
+      cartItems: cart.cartItems,
+      shippingAddress,
+      totalOrderPrice: orderPrice,
+      isPaid: true,
+      paidAt: Date.now(),
+      paymentMethodType: "card"
+    });
 
-    // 5) Clear cart depend on cartId
-    await Cart.findByIdAndDelete(cartId);
+    if (order) {
+      const bulkOption = cart.cartItems.map((item) => ({
+        updateOne: {
+          filter: { _id: item.product },
+          update: { $inc: { quantity: -item.quantity, sold: +item.quantity } }
+        }
+      }));
+
+      await ProductModel.bulkWrite(bulkOption);
+      await CartModel.findByIdAndDelete(cartId);
+    }
+  } catch (err) {
+    console.error("Failed to create order from Stripe session:", err);
   }
 };
 
@@ -200,7 +207,7 @@ exports.webhookCheckout = asyncHandler(async (req, res, next) => {
   }
   if (event.type === "checkout.session.completed") {
     console.log("Payment was successful!...........");
-    createCardOrder(event.data.object);
+    await createCardOrder(event.data.object);
   }
 
   res.status(200).json({ received: true });
