@@ -8,6 +8,7 @@ const compression = require("compression");
 const ApiError = require("./utils/ApiErrors");
 const globalError = require("./middlewares/errorMiddleware");
 const dbConnection = require("./config/database");
+const { webhookCheckout } = require("./services/orderService");
 
 // Routes
 const mountRoutes = require("./Routes/index");
@@ -27,6 +28,13 @@ app.use(express.json());
 
 // compress all responses
 app.use(compression());
+
+// Checkout webhook
+app.post(
+  "/webhook-checkout",
+  express.raw({ type: "application/json" }),
+  webhookCheckout
+);
 
 // MiddleWares
 app.use(express.json());
@@ -55,10 +63,9 @@ app.get("/", (req, res) => {
   res.send("Welcome to the server of E-commerce API");
 });
 
-// const server = app.listen(PORT, () => {
-//   console.log(`App running at port ${PORT}`);
-// });
-module.exports = app;
+const server = app.listen(PORT, () => {
+  console.log(`App running at port ${PORT}`);
+});
 
 //  Handle Errors outside express
 process.on("unhandledRejection", (error) => {
@@ -67,3 +74,5 @@ process.on("unhandledRejection", (error) => {
     process.exit(1);
   });
 });
+
+module.exports = app;
