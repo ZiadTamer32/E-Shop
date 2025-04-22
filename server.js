@@ -55,9 +55,10 @@ app.get("/", (req, res) => {
   res.send("Welcome to the server of E-commerce API");
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`App running at port ${PORT}`);
-});
+// const server = app.listen(PORT, () => {
+//   console.log(`App running at port ${PORT}`);
+// });
+module.exports = app;
 
 //  Handle Errors outside express
 process.on("unhandledRejection", (error) => {
