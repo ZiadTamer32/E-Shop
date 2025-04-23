@@ -22,23 +22,19 @@ dbConnection();
 // express app
 const app = express();
 
-// Enable CORS for all routes
-app.use(cors());
-app.use(express.json());
-
-// compress all responses
-app.use(compression());
-
-// Checkout webhook
+// ✅ Webhook route comes first (before JSON parsing)
 app.post(
   "/webhook-checkout",
   express.raw({ type: "application/json" }),
   webhookCheckout
 );
 
-// MiddleWares
+// ✅ Then apply body parser and other middlewares
+app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "uploads"))); // To serve static files || مخصص Route الوصول إليه مباشرة عبر المتصفح دون الحاجة إلى كتابة ||  http://localhost:8000/categories/profile.jpeg
+app.use(compression());
+app.use(express.static(path.join(__dirname, "uploads")));
+
 const { NODE_ENV } = process.env;
 
 if (NODE_ENV === "development") {
@@ -53,10 +49,10 @@ app.all("*", (req, res, next) => {
   next(new ApiError(`This route not found ${req.originalUrl}`, 500));
 });
 
-// Global errors in express only
+// Global error handling
 app.use(globalError);
 
-// Ports
+// Server start
 const PORT = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
@@ -67,7 +63,7 @@ const server = app.listen(PORT, () => {
   console.log(`App running at port ${PORT}`);
 });
 
-//  Handle Errors outside express
+// Handle unhandled rejections
 process.on("unhandledRejection", (error) => {
   console.error("UnhandledRejection connection error:", error.message);
   server.close(() => {
