@@ -151,11 +151,17 @@ exports.checkOutSession = asyncHandler(async (req, res, next) => {
   });
 });
 
+const endPointSecret = "whsec_eOwWVvfO7ihIiPDn9vJCZ2AWMpaLJKVP";
+
 const createCardOrder = async (session) => {
   try {
     const cartId = session.client_reference_id;
     const shippingAddress = session.metadata;
     const orderPrice = session.amount_total / 100;
+
+    console.log("Cart Id :", cartId);
+    console.log("Shipping Address :", shippingAddress);
+    console.log("Order Price :", orderPrice);
 
     const cart = await CartModel.findById(cartId);
     const user = await UserModel.findOne({ email: session.customer_email });
@@ -169,10 +175,10 @@ const createCardOrder = async (session) => {
       user: user._id,
       cartItems: cart.cartItems,
       shippingAddress,
-      totalOrderPrice: orderPrice,
+      totalPrice: orderPrice,
       isPaid: true,
       paidAt: Date.now(),
-      paymentMethodType: "card"
+      paymentMethod: "card"
     });
 
     if (order) {
@@ -196,11 +202,7 @@ exports.webhookCheckout = asyncHandler(async (req, res, next) => {
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      "whsec_eOwWVvfO7ihIiPDn9vJCZ2AWMpaLJKVP"
-    );
+    event = stripe.webhooks.constructEvent(req.body, sig, endPointSecret);
   } catch (err) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
