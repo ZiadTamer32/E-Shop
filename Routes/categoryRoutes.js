@@ -26,28 +26,36 @@ const subcategoriesRoute = require("./subCategoryRoutes");
 
 router.use("/:categoryId/subcategories", subcategoriesRoute);
 
-router
-  .route("/")
-  .get(getCategory)
-  .post(
-    protect,
-    allowedTo("admin"),
-    imageCategoryUplaod,
-    resizeImage,
-    createCategoryValidator,
-    createCategory
-  );
-router
-  .route("/:id")
-  .get(getCategoryValidator, getCategoryById)
-  .put(
-    protect,
-    allowedTo("admin"),
-    imageCategoryUplaod,
-    resizeImage,
-    updateCategoryValidator,
-    updateCategry
-  )
-  .delete(protect, allowedTo("admin"), deleteCategoryValidator, deleteCategory);
+router.get("/", getCategory);
+
+router.post(
+  "/",
+  protect,
+  allowedTo("admin"),
+  imageCategoryUplaod,
+  resizeImage,
+  createCategoryValidator,
+  createCategory
+);
+
+router.get("/:id", getCategoryValidator, getCategoryById);
+
+router.put(
+  "/:id",
+  protect,
+  allowedTo("admin"),
+  imageCategoryUplaod,
+  resizeImage,
+  updateCategoryValidator,
+  updateCategry
+);
+
+router.delete(
+  "/:id",
+  protect,
+  allowedTo("admin"),
+  deleteCategoryValidator,
+  deleteCategory
+);
 
 module.exports = router;

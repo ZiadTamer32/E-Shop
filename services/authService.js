@@ -6,6 +6,7 @@ const asyncHandler = require("express-async-handler");
 const UserModel = require("../models/UserModel");
 const ApiError = require("../utils/ApiErrors");
 const sendEmail = require("../utils/sendEmail");
+const { sanitizeUser } = require("../utils/sanitizeData");
 
 exports.signUp = asyncHandler(async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -14,7 +15,7 @@ exports.signUp = asyncHandler(async (req, res, next) => {
   const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN
   });
-  res.status(201).json({ data: user, token });
+  res.status(201).json({ data: sanitizeUser(user), token });
 });
 
 exports.login = asyncHandler(async (req, res, next) => {

@@ -1,6 +1,4 @@
-const stripe = require("stripe")(
-  "sk_test_51RGK3fIDoXpCy44eJN4Tdwy0Qd7pUeOOzkugeILdmJpRmADdblIyha8CPGrc4t8Ll72Cg3eWSa4yWMwLlyliGE7i00OGC5PXjl"
-);
+const stripe = require("stripe")(process.env.STRIPE);
 
 const asyncHandler = require("express-async-handler");
 const factory = require("./handleFactory");
@@ -151,7 +149,7 @@ exports.checkOutSession = asyncHandler(async (req, res, next) => {
   });
 });
 
-const endPointSecret = "whsec_eOwWVvfO7ihIiPDn9vJCZ2AWMpaLJKVP";
+const endPointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 const createCardOrder = async (session) => {
   try {
